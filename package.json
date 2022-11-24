@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "colors": "^1.4.0",
+    "docker-cli-js": "^2.9.0",
+    "node-fetch": "^2.6.7",
+    "tcp-port-used": "^1.0.2"
+  }
+}
