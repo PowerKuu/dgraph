@@ -1,0 +1,4 @@
+type Car {
+	name: String! @search(by:[exact]) @id
+	id: Int!
+}

@@ -1,4 +1,5 @@
 // https://github.com/graphql/graphql-playground/releases/tag/v1.8.10
+// http://localhost:8080/graphql
 
 const fs = require("fs")
 const path = require("path")
@@ -16,7 +17,7 @@ const graphqlHost = "localhost"
 const graphqlPort = 8080
 const graphqlServer = `${graphqlHost}:${graphqlPort}`
 
-const schemaPath = path.join(workingDir, "/schema.gql")
+const schemaPath = path.join(workingDir, "/schema.graphql")
 const dockerComposePath = path.join(workingDir, "/docker-compose.yml")
 
 const readline = require('readline').createInterface({
