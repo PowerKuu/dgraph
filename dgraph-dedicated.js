@@ -123,7 +123,7 @@ function watchGqlSchema() {
 
             cli.schemaValid = false
         } else {    
-            error("Validation", "Unknown validation error. Data: " + validate)
+            error("Validation", "Unknown validation error! Data: " + validate)
 
             cli.schemaValid = false
         }
@@ -159,14 +159,16 @@ async function runDev() {
     })
     .then(() => {
         success("Docker", "Successfully running docker container.")
-        info("Watch", "Trying to find and wath GQL schema.")
+        info("Watch", "Trying to find and watch GQL schema.")
         watchGqlSchema()
     })
 }
 
 async function runProd(){
-    info("Startup", "Starting docker server in production mode.")
+    info("Startup", "Starting server in production mode.")
+    info("Docker", `Starting docker server with ${dockerComposePath}.`)
     await startDocker()
+    success("Docker", "Successfully running docker container.")
 }
 
 

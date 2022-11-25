@@ -26,6 +26,7 @@ List of commands:
 -   reload: "Runs "drop schema" and "migrate".
 -   ratel: "Run the ratel GUI to inspect data."
 
+-   stop: "Stop this process."
 -   help: "Thist list of commands"
     `)
 
@@ -180,10 +181,15 @@ class CLI {
                 case "help":
                     help()
                     break
+                case "stop":
+                    process.exit(0)
+                    break
 
                 case "migrate":
                     if (!this.schemaValid) {
+                        cli.abort()
                         error("Migrating", "Youre schema is not valid! Aborting migration.")
+                        cli.resume()
                     } else {
                         migrate(this.schema, this.migratePath)
                     }
@@ -194,7 +200,9 @@ class CLI {
                     break
                 case "reload":
                     if (!this.schemaValid) {
+                        cli.abort()
                         error("Migrating", "Youre schema is not valid! Aborting migration.")
+                        cli.resume()
                     } else {
                         reload(this.schema, this.migratePath, this.alterPath)
                     }
