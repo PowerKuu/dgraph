@@ -4,5 +4,22 @@
     "docker-cli-js": "^2.9.0",
     "node-fetch": "^2.6.7",
     "tcp-port-used": "^1.0.2"
-  }
+  },
+  "name": "dgraph-dedicated",
+  "version": "1.0.1",
+  "main": "dgraph-dedicated.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PowerKuu/dgraph.git"
+  },
+  "bin": "./dgraph-dedicated.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PowerKuu/dgraph/issues"
+  },
+  "homepage": "https://github.com/PowerKuu/dgraph#readme",
+  "description": ""
 }

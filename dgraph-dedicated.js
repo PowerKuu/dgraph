@@ -1,5 +1,8 @@
+#!/usr/bin/env node
+
+// Use this to test graphql
 // https://github.com/graphql/graphql-playground/releases/tag/v1.8.10
-// http://localhost:8080/graphql
+// http://localhost:8280/graphql
 
 const fs = require("fs")
 const path = require("path")
@@ -10,15 +13,57 @@ const nodeFetch = require("node-fetch")
 
 const {error, info, success} = require("./utils/logger")
 
-const workingDir = __dirname
+const workingDir = process.cwd()
 
-const graphqlSsl = false
-const graphqlHost = "localhost"
-const graphqlPort = 8080
-const graphqlServer = `${graphqlHost}:${graphqlPort}`
+const configPath = path.resolve(workingDir, "./dgraph-dedicated.json")
+var currentConfig
 
-const schemaPath = path.join(workingDir, "/schema.graphql")
-const dockerComposePath = path.join(workingDir, "/docker-compose.yml")
+try {
+    currentConfig = require(configPath)
+} catch (e) {
+    currentConfig = {}
+}
+
+const config = {
+    "server": {
+        "host": "localhost",
+        "port": 8280,
+        "ssl":  false
+    },
+
+    "schema": "./schema.graphql",
+    "docker": "./docker-compose.yml",
+
+    ...(currentConfig)
+}
+
+fs.writeFileSync(configPath, JSON.stringify(config, null, "\t"))
+
+const graphqlServer = `${config.server.host}:${config.server.port}`
+
+const schemaPath = path.resolve(workingDir, config.schema)
+
+var dockerComposePath = path.resolve(workingDir, config.docker)
+
+if (!fs.existsSync(dockerComposePath)) {
+    info("Docker", "Docker compose file not found. Copying deafult docker-compose.")
+    console.log("")
+
+    dockerComposePath = path.resolve(workingDir, "./docker-compose.yml")
+    fs.writeFileSync(dockerComposePath, fs.readFileSync(
+        path.resolve(__dirname, "./deafult-docker.yml")
+    ))
+}
+
+fs.writeFileSync(path.resolve(workingDir, "./dev.sh"), `
+#!/usr/bin/env bash
+npx docker-dedicated dev
+`.trim())
+fs.writeFileSync(path.resolve(workingDir, "./dev.bat"), `
+@echo off
+npx docker-dedicated dev
+`.trim())
+
 
 const readline = require('readline').createInterface({
     input: process.stdin,
@@ -27,7 +72,7 @@ const readline = require('readline').createInterface({
 
 async function waitUntilDockerConnection() {
     return new Promise((resolve, reject) => {
-        tcpPortUsed.waitUntilUsedOnHost(graphqlPort, graphqlHost, 1000, 30000)
+        tcpPortUsed.waitUntilUsedOnHost(config.server.port, config.server.host, 1000, 30000)
         .then(() => {
             setTimeout(resolve, 5000)
         })
@@ -36,8 +81,8 @@ async function waitUntilDockerConnection() {
 }
 
 async function startDocker() {
-    exec("docker-compose up", {cwd: workingDir}, (error) => {
-        if (error) error("Docker", "Random error: " + error, true)
+    exec("docker-compose up", {cwd: workingDir}, (err) => {
+        if (err) error("Docker", "Random error: " + err, true)
     })
 
     return await waitUntilDockerConnection()
@@ -48,16 +93,16 @@ function watchGqlSchema() {
         console.log("")
 
         const schema = fs.readFileSync(schemaPath)
-        const protocol = graphqlSsl ? "https://" : "http://"
+        const protocol = config.server.ssl ? "https://" : "http://"
         const validatePath = protocol + graphqlServer + "/admin/schema/validate"
         const migratePath = protocol + graphqlServer + "/admin/schema"
 
         const validateRaw = await nodeFetch(validatePath, {
             method: "POST",
             body: schema
-        }).catch((error) => {
+        }).catch((err) => {
             error("Validation", `Error sending validation request to ${validatePath}`)
-            error("Validation", error)
+            error("Validation", err)
         })
 
         if (!validateRaw) return
@@ -107,13 +152,14 @@ function watchGqlSchema() {
 
     success("Watch", "Successfully watching schema: " + schemaPath)
     success("Startup", "Startup completed successfully.")
+    info("Startup", `Start editing ${schemaPath} to get live updates!`)
     console.log("[-----------------------------------------------------------------------------------------------]")
 }
 
 async function runDev() {
-    info("Startup", `Starting GQL dev server host: ${graphqlServer}; ssl: ${graphqlSsl};`)
+    info("Startup", `Run "npx docker-dedicated prod" to run in production.`)
+    info("Startup", `Starting GQL dev server host: ${graphqlServer}; ssl: ${config.server.ssl};`)
     info("Startup", `Name: dGraph GQL server; Version: 1.0.0; Author: klevn;`)
-    info("Startup", `Start editing ${schemaPath} to get live updates!`)
 
     info("Docker", `Starting docker server with ${dockerComposePath}.`)
 
@@ -128,4 +174,13 @@ async function runDev() {
     })
 }
 
-runDev()
+async function runProd(){
+    await startDocker()
+}
+
+
+if (process.argv[1] == "dev" || !process.argv[1]) {
+    runDev()
+} else if (process.argv[1] == "prod") {
+    runProd()
+}
