@@ -32,8 +32,10 @@ const config = {
     },
 
     "schema": "./schema.graphql",
-    "docker": "./docker-compose.yml",
-
+	"docker": {
+		"compose": "./docker-compose.yml",
+		"name": "dgraph-dedicated",
+	},
     ...(currentConfig)
 }
 
@@ -44,7 +46,7 @@ const protocol = config.server.ssl ? "https://" : "http://"
 
 const schemaPath = path.resolve(workingDir, config.schema)
 
-var dockerComposePath = path.resolve(workingDir, config.docker)
+var dockerComposePath = path.resolve(workingDir, config.docker.compose)
 
 if (!fs.existsSync(dockerComposePath)) {
     info("Docker", "Docker compose file not found. Copying deafult docker-compose.")
@@ -82,7 +84,7 @@ async function waitUntilDockerConnection() {
 }
 
 async function startDocker() {
-    exec("docker-compose up", {cwd: workingDir}, (err) => {
+    exec(`docker-compose up -p ${config.docker.name}`, {cwd: workingDir}, (err) => {
         if (err) error("Docker", "Random error: " + err, true)
     })
 
@@ -180,8 +182,8 @@ async function runProd(){
 }
 
 
-if (process.argv[1] == "dev" || !process.argv[1]) {
+if (process.argv[2] == "dev" || !process.argv[2]) {
     runDev()
-} else if (process.argv[1] == "prod") {
+} else if (process.argv[2] == "prod") {
     runProd()
 }
