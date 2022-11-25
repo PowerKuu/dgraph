@@ -12,6 +12,7 @@ const tcpPortUsed = require("tcp-port-used")
 const nodeFetch = require("node-fetch")
 
 const {error, info, success} = require("./utils/logger")
+const cli = require("./dgraph-cli")
 
 const workingDir = process.cwd()
 
@@ -45,6 +46,10 @@ const graphqlServer = `${config.server.host}:${config.server.port}`
 const protocol = config.server.ssl ? "https://" : "http://"
 
 const schemaPath = path.resolve(workingDir, config.schema)
+const validatePath = protocol + graphqlServer + "/admin/schema/validate"
+const migratePath = protocol + graphqlServer + "/admin/schema"
+const queryPath = protocol + graphqlServer + "/query"
+const alterPath = protocol + graphqlServer + "/alter"
 
 var dockerComposePath = path.resolve(workingDir, config.docker.compose)
 
@@ -67,12 +72,6 @@ fs.writeFileSync(path.resolve(workingDir, "./dev.bat"), `
 npx docker-dedicated dev
 `.trim())
 
-
-const readline = require('readline').createInterface({
-    input: process.stdin,
-    output: process.stdout
-})
-
 async function waitUntilDockerConnection() {
     return new Promise((resolve, reject) => {
         tcpPortUsed.waitUntilUsedOnHost(config.server.port, config.server.host, 1000, 30000)
@@ -84,7 +83,7 @@ async function waitUntilDockerConnection() {
 }
 
 async function startDocker() {
-    exec(`docker-compose up --force-recreate`, {cwd: workingDir}, (err) => {
+    exec(`docker-compose up`, {cwd: workingDir}, (err) => {
         if (err) error("Docker", "Error in docker-compose: " + err, true)
     })
 
@@ -93,11 +92,8 @@ async function startDocker() {
 
 function watchGqlSchema() {
     async function updateGqlSchema() {  
-        console.log("")
-
+        cli.abort()
         const schema = fs.readFileSync(schemaPath)
-        const validatePath = protocol + graphqlServer + "/admin/schema/validate"
-        const migratePath = protocol + graphqlServer + "/admin/schema"
 
         const validateRaw = await nodeFetch(validatePath, {
             method: "POST",
@@ -117,31 +113,22 @@ function watchGqlSchema() {
             firstElement.extensions && 
             firstElement.extensions.code === "success") 
         {
-            success("Validation", "Youre GQl schema validated successfully.")
-
-            readline.question("Type (yes) to migrate schema: ", (msg) => {
-                if (msg == "yes") {
-                    info("Migrating", "Starting to migrate schema to database.")
-
-                    nodeFetch(migratePath, {
-                        method: "POST",
-                        body: schema
-                    }) 
-                    .then((code) => {
-                        success("Migrating", "Migrated schema to database. Status code: " + code.status)
-                    })
-                    .catch((err) => {
-                        error("Migrating", "Unexpected error while migrating: " + err)
-                    })
-                }
-            })
+            success("Validation", `Youre GQl schema validated successfully. Write "migrate" to update.`)
+            cli.schema = schema
+            cli.schemaValid = true
         } else if (firstElement) {
             validate.errors.forEach(element => {
                 error("Validation", `Schema validation: "${element.message}".`)
             })
+
+            cli.schemaValid = false
         } else {    
             error("Validation", "Unknown validation error. Data: " + validate)
+
+            cli.schemaValid = false
         }
+
+        cli.resume()
     }
 
     if (!fs.existsSync(schemaPath)) {
@@ -155,13 +142,14 @@ function watchGqlSchema() {
     success("Watch", "Successfully watching schema: " + schemaPath)
     success("Startup", `Startup completed successfully. Run query on ${protocol}${graphqlServer}/graphql`)
     info("Startup", `Start editing ${schemaPath} to get live updates!`)
-    console.log("[-----------------------------------------------------------------------------------------------]")
+    console.log("")
+    cli.start(migratePath, alterPath, queryPath)
 }
 
 async function runDev() {
     info("Startup", `Run "npx docker-dedicated prod" to run in production.`)
     info("Startup", `Starting GQL dev server host: ${graphqlServer}; ssl: ${config.server.ssl};`)
-    info("Startup", `Name: dGraph GQL server; Version: 2.0.0; Author: klevn;`)
+    info("Startup", `Name: dGraph GQL server; Version: 2.0.5; Author: klevn;`)
 
     info("Docker", `Starting docker server with ${dockerComposePath}.`)
 

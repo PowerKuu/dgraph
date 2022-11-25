@@ -1,0 +1,12 @@
+{
+	"server": {
+		"host": "localhost",
+		"port": 8080,
+		"ssl": false
+	},
+	"schema": "./schema.graphql",
+	"docker": {
+		"compose": "./docker-compose.yml",
+		"name": "dgraph-dedicated"
+	}
+}

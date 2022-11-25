@@ -1,0 +1,14 @@
+version: '3.5'
+services:
+  alpha1:
+    command: dgraph alpha --my=alpha1:7080 --zero=zero1:5080
+    container_name: alpha1
+    image: dgraph/dgraph:v22.0.0
+    environment:
+      DGRAPH_ALPHA_SECURITY: whitelist=10.0.0.0/8,172.0.0.0/8,192.168.0.0/16
+    ports:
+      - "8080:8080"
+  zero1:
+    command: dgraph zero --my=zero1:5080 --replicas 1 --raft idx=1
+    container_name: zero1
+    image: dgraph/dgraph:v22.0.0
