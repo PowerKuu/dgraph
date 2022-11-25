@@ -1,3 +1,4 @@
 type Hello {
-    world: String
+    world: String,
+    name: String,
 }

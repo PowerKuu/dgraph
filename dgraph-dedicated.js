@@ -12,7 +12,7 @@ const tcpPortUsed = require("tcp-port-used")
 const nodeFetch = require("node-fetch")
 
 const {error, info, success} = require("./utils/logger")
-const cli = require("./dgraph-cli")
+const cli = require("./dgraph-commands")
 
 const workingDir = process.cwd()
 
@@ -59,7 +59,7 @@ if (!fs.existsSync(dockerComposePath)) {
 
     dockerComposePath = path.resolve(workingDir, "./docker-compose.yml")
     fs.writeFileSync(dockerComposePath, fs.readFileSync(
-        path.resolve(__dirname, "./deafult-docker.yml")
+        path.resolve(__dirname, "./docker/deafult-docker.yml")
     ))
 }
 
@@ -143,7 +143,7 @@ function watchGqlSchema() {
     success("Startup", `Startup completed successfully. Run query on ${protocol}${graphqlServer}/graphql`)
     info("Startup", `Start editing ${schemaPath} to get live updates!`)
     console.log("")
-    cli.start(migratePath, alterPath, queryPath)
+    cli.start(migratePath, alterPath)
 }
 
 async function runDev() {
