@@ -84,8 +84,8 @@ async function waitUntilDockerConnection() {
 }
 
 async function startDocker() {
-    exec(`docker-compose up -p ${config.docker.name}`, {cwd: workingDir}, (err) => {
-        if (err) error("Docker", "Random error: " + err, true)
+    exec(`docker-compose up --force-recreate`, {cwd: workingDir}, (err) => {
+        if (err) error("Docker", "Error in docker-compose: " + err, true)
     })
 
     return await waitUntilDockerConnection()
@@ -161,7 +161,7 @@ function watchGqlSchema() {
 async function runDev() {
     info("Startup", `Run "npx docker-dedicated prod" to run in production.`)
     info("Startup", `Starting GQL dev server host: ${graphqlServer}; ssl: ${config.server.ssl};`)
-    info("Startup", `Name: dGraph GQL server; Version: 1.0.2; Author: klevn;`)
+    info("Startup", `Name: dGraph GQL server; Version: 2.0.0; Author: klevn;`)
 
     info("Docker", `Starting docker server with ${dockerComposePath}.`)
 
