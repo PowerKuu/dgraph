@@ -1,4 +1,0 @@
-type Hello {
-    world: String,
-    name: String,
-}

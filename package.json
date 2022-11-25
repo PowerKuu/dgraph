@@ -7,19 +7,19 @@
     "tcp-port-used": "^1.0.2"
   },
   "name": "dgraph-dedicated",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "main": "dgraph-dedicated.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PowerKuu/dgraph.git"
+    "url": "git+https://github.com/PowerKuu/dgraph-dedicated.git"
   },
   "bin": "./dgraph-dedicated.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/PowerKuu/dgraph/issues"
+    "url": "https://github.com/PowerKuu/dgraph-dedicated/issues"
   },
-  "homepage": "https://github.com/PowerKuu/dgraph#readme",
+  "homepage": "https://github.com/PowerKuu/dgraph-dedicated#readme",
   "description": ""
 }
