@@ -175,6 +175,7 @@ async function runDev() {
 }
 
 async function runProd(){
+    info("Startup", "Starting docker server in production mode.")
     await startDocker()
 }
 
