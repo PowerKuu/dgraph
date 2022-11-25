@@ -2,7 +2,7 @@
 
 // Use this to test graphql
 // https://github.com/graphql/graphql-playground/releases/tag/v1.8.10
-// http://localhost:8280/graphql
+// http://localhost:8080/graphql
 
 const fs = require("fs")
 const path = require("path")
@@ -27,7 +27,7 @@ try {
 const config = {
     "server": {
         "host": "localhost",
-        "port": 8280,
+        "port": 8080,
         "ssl":  false
     },
 
@@ -40,6 +40,7 @@ const config = {
 fs.writeFileSync(configPath, JSON.stringify(config, null, "\t"))
 
 const graphqlServer = `${config.server.host}:${config.server.port}`
+const protocol = config.server.ssl ? "https://" : "http://"
 
 const schemaPath = path.resolve(workingDir, config.schema)
 
@@ -93,7 +94,6 @@ function watchGqlSchema() {
         console.log("")
 
         const schema = fs.readFileSync(schemaPath)
-        const protocol = config.server.ssl ? "https://" : "http://"
         const validatePath = protocol + graphqlServer + "/admin/schema/validate"
         const migratePath = protocol + graphqlServer + "/admin/schema"
 
@@ -151,7 +151,7 @@ function watchGqlSchema() {
     })
 
     success("Watch", "Successfully watching schema: " + schemaPath)
-    success("Startup", "Startup completed successfully.")
+    success("Startup", `Startup completed successfully. Run query on ${protocol}${graphqlServer}/graphql`)
     info("Startup", `Start editing ${schemaPath} to get live updates!`)
     console.log("[-----------------------------------------------------------------------------------------------]")
 }
