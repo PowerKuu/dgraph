@@ -159,7 +159,7 @@ function watchGqlSchema() {
 async function runDev() {
     info("Startup", `Run "npx docker-dedicated prod" to run in production.`)
     info("Startup", `Starting GQL dev server host: ${graphqlServer}; ssl: ${config.server.ssl};`)
-    info("Startup", `Name: dGraph GQL server; Version: 1.0.0; Author: klevn;`)
+    info("Startup", `Name: dGraph GQL server; Version: 1.0.2; Author: klevn;`)
 
     info("Docker", `Starting docker server with ${dockerComposePath}.`)
 
