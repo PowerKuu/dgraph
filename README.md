@@ -1,4 +1,4 @@
 # Dgraph-dedicated
 
-Run: ```mmmmmmmmm stuff```
+Run: ```sh npx dgraph-dedicated <dev/prod>```
 
