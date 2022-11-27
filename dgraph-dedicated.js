@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
-// Use this to test graphql
-// https://github.com/graphql/graphql-playground/releases/tag/v1.8.10
-// http://localhost:8080/graphql
-
 const fs = require("fs")
 const path = require("path")
 const {exec} = require("child_process")
