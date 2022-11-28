@@ -61,11 +61,11 @@ if (!fs.existsSync(dockerComposePath)) {
 
 fs.writeFileSync(path.resolve(workingDir, "./dev.sh"), `
 #!/usr/bin/env bash
-npx docker-dedicated dev
+npx dgraph-dedicated dev
 `.trim())
 fs.writeFileSync(path.resolve(workingDir, "./dev.bat"), `
 @echo off
-npx docker-dedicated dev
+npx dgraph-dedicated dev
 `.trim())
 
 async function waitUntilDockerConnection() {
