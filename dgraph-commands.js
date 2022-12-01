@@ -27,7 +27,7 @@ List of commands:
 -   ratel: "Run the ratel GUI to inspect data."
 
 -   stop: "Stop this process."
--   help: "Thist list of commands"
+-   help: "This list of commands"
     `)
 
     cli.resume()
@@ -212,7 +212,7 @@ class CLI {
                     break
 
                 default:
-                    info("CLI", `No command with name ${argv[0]}. Type help for all commands.`)
+                    info("CLI", `No command with name ${argv[0]}. Type "help" for all commands.`)
                     this.resume()
             }
         })

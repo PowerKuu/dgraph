@@ -6,7 +6,7 @@
     "tcp-port-used": "^1.0.2"
   },
   "name": "dgraph-dedicated",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "main": "dgraph-dedicated.js",
   "repository": {
     "type": "git",
