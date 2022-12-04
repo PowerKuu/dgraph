@@ -1,11 +1,13 @@
-import {resolve} from "path"
+import {resolve as resolvePath} from "path"
 import nodeFetch from "node-fetch"
-import * as open from "open" 
+import openFile from "open" 
 import { exec } from "child_process"
+
+import clear from "console-clear"
 
 import {error, info, success} from "./utils/logger"
 
-import {Paths} from "./types"
+import { Paths, Cases } from "./types"
 import lang from "./lang"
 
 const readline = require('readline').createInterface({
@@ -24,89 +26,100 @@ class CLI {
     aborter?: AbortController
 
     start(paths:Paths) {
+        clear()
+
         this.paths = paths
 
         this.schema = ""
         this.schemaValid = false
-        this.aborter = new AbortController()
+        
+        this.pause()
+    }
+
+
+
+    async execute(argv:string[]){
+        const command = argv[0]
+        const firstArgmuent = argv[1]
+
+        this.pause()
+
+        const cases:Cases = {
+            help: async () => {
+                this.help()
+            },
+            stop: async () => {
+                process.exit(0)
+            },
+            migrate: async () => {
+                return this.migrate()
+            },
+            drop: async () => {    
+                return this.drop(firstArgmuent)
+            },
+            reload: async () => {
+                return this.reload()
+            },
+            ratel: async () => {
+                return this.ratel()
+            },
+
+            default: async () => {
+                info("cli", lang.deafult(command))
+            }
+        }
+
+        if (!command) {
+            this.resume() 
+            return
+        }
+
+        if (cases[command]) await cases[command]().catch(() => {})
+        else cases.default()
+
         this.resume()
     }
 
 
-    
     help() {
-        cliSingelton.pause()
         console.log(lang.help())
-        cliSingelton.resume()
     }
     
     ratel() {
-        cliSingelton.pause()
-        info("ratel", lang.ratel.start())
-        const ratelPath = resolve(__dirname, "./docker/ratel")
-    
-        exec("docker-compose up", {cwd: ratelPath}, (err) => {
-            if (err) {
-                cliSingelton.pause()
-                error("ratel", lang.ratel.errorRunning())
-                error("ratel", lang.ratel.isPortTaken())
-                info("ratel", lang.ratel.changeDockerYML(ratelPath))
-                cliSingelton.resume()
-            }
-        })
-        info("ratel", lang.ratel.wait())
-    
-        setTimeout(() => {
-            open(deafultRatelHost)    
-        }, 5000)
-    
-        cliSingelton.resume()
-    }
-
-
-    execute(argv:string[]){
-        const command = argv[0]
-        const firstArgmuent = argv[1]
-
-        const cases = {
-            help: () => {
-                this.help()
-            },
-            stop: () => {
-                process.exit(0)
-            },
-            migrate: () => {
-                this.migrate()
-            },
-            drop: () => {    
-                this.drop(firstArgmuent)
-            },
-            reload: () => {
-                this.reload()
-            },
-            ratel: () => {
-                this.ratel()
-            },
-
-            default: () => {
-                this.pause()
-                info("cli", lang.deafult(firstArgmuent))
-                this.resume()
-            }
-        }
-
-        if (!command) return
-        if (cases[command]) cases[command]()
-        else cases.default()
-    }
-
-    drop(firstArgmuent:string, resume = true) {
         return new Promise((resolve, reject) => {
-            cliSingelton.pause()
+            info("ratel", lang.ratel.start())
+            const ratelPath = resolvePath(__dirname, "./docker/ratel")
 
+            var execErr:any
+
+            info("ratel", lang.ratel.wait())
+
+            exec("docker-compose up", {cwd: ratelPath}, (err) => {
+                if (err) {
+                    execErr = err
+
+                    error("ratel", err)
+                    error("ratel", lang.ratel.errorRunning())
+                    error("ratel", lang.ratel.isPortTaken())
+                    info("ratel", lang.ratel.changeDockerYML(ratelPath))
+
+                    reject()
+                }
+            })
+
+            setTimeout(() => {
+                if (execErr) return
+                openFile(deafultRatelHost)    
+                resolve(true)
+            }, 5000)
+        })
+    }
+
+    drop(firstArgmuent:string) {
+        return new Promise((resolve, reject) => {
             if (firstArgmuent != "data" && firstArgmuent != "schema") {
                 error("drop", lang.drop.argumentData())
-                cliSingelton.resume()
+                reject()
                 return
             }
 
@@ -132,10 +145,8 @@ class CLI {
 
                 return requestAlter().then(() => {
                     success("drop", lang.drop.data.success())
-                    resolve(true)
                 }).catch((err) => {
                     error("drop", lang.drop.data.error(err))
-                    reject()
                 })
             }
 
@@ -144,17 +155,15 @@ class CLI {
     
                 return requestAlter().then(() => {
                     success("drop", lang.drop.schema.success())
-                    resolve(true)
                 }).catch((err) => {
                     error("drop", lang.drop.schema.error(err))
-                    reject()
                 })
             }
     
             const operation = dropingData ? dropData : dropSchema
 
             operation().finally(() => {
-                if (resume) cliSingelton.resume()
+                resolve(true)
             })
         })
     }
@@ -181,15 +190,9 @@ class CLI {
     }
 
     async migrate() {
-        cliSingelton.pause()
-
-        const final = () => {
-            cliSingelton.resume()
-        }
 
         if (!this.schemaValid) {
             error("migrating", lang.migrating.notValid())
-            final()
             return
         }
 
@@ -200,26 +203,24 @@ class CLI {
             body: this.schema
         }).catch((err) => {
             error("migrating", lang.migrating.error(err))
-            final()
         })
 
         if (!response) return
 
         success("migrating", lang.migrating.success(response.status))
-        final()
     }
 
     async reload() {
-        cliSingelton.pause()
-
         if (!this.schemaValid) {
             error("migrating", lang.migrating.notValid())
-            cliSingelton.resume()
+            return
         }
 
-        this.drop("schema", false)
+        await this.drop("schema")
         .then(() => this.migrate())
         .catch(() => {})
+
+        return
     }
 }
 

@@ -1,2 +1,3 @@
 @echo off
-npx docker-dedicated dev
+npx @klevn/dgraph cli
+pause

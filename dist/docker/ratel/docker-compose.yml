@@ -1,0 +1,8 @@
+version: '3.5'
+services:
+  ratel:
+    container_name: "ratel"
+    image: "dgraph/ratel"
+
+    ports:
+      - "8000:8000"

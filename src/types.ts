@@ -12,7 +12,12 @@ export interface Config {
 	}
 }
 
+export interface Cases {
+    [name:string]: () => Promise<any>
+}
+
 export interface Paths {
+    graphql: string,
     schema: string
     validate: string
     migrate: string

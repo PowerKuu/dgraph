@@ -4,11 +4,11 @@ import {existsSync, readFileSync, writeFileSync, watchFile} from "fs"
 import {resolve} from "path"
 import {exec} from "child_process"
 
-import tcpPortUsed from "tcp-port-used"
+import { waitUntilUsedOnHost } from "tcp-port-used"
 import nodeFetch from "node-fetch"
 
 import {error, info, success, logBreak} from "./utils/logger"
-import cliSingelton from "./dgraph-cli"
+import cliSingelton from "./cli"
 
 import {Config, Paths} from "./types"
 
@@ -38,14 +38,15 @@ const deafults = {
     },
 
     devSh: `
-        #!/usr/bin/env bash
-        npx dgraph-dedicated dev
-    `,
+#!/usr/bin/env bash
+npx @klevn/dgraph cli
+    `.trim(),
 
     devBat: `
-    @echo off
-    npx dgraph-dedicated dev
-    `
+@echo off
+npx @klevn/dgraph cli
+pause
+    `.trim()
 }
 
 const config:Config = {
@@ -57,6 +58,8 @@ const graphqlServerHost = `${config.server.host}:${config.server.port}`
 const protocol = config.server.ssl ? "https://" : "http://"
 
 const paths:Paths = {
+    graphql: protocol + graphqlServerHost,
+
     schema: resolve(workingDir, config.schema),
     validate: protocol + graphqlServerHost + "/admin/schema/validate",
     migrate:  protocol + graphqlServerHost + "/admin/schema",
@@ -65,9 +68,9 @@ const paths:Paths = {
     dockerCompose: resolve(workingDir, config.docker.compose)
 }
 
+writeFileSync(resolve(workingDir, "./dev.sh"), deafults.devSh)
+writeFileSync(resolve(workingDir, "./dev.bat"), deafults.devBat)
 
-writeFileSync(resolve(workingDir, "./dev.sh"), deafults.devSh.trim())
-writeFileSync(resolve(workingDir, "./dev.bat"), deafults.devBat.trim().trim())
 
 async function insureDockerExists() {
     if (!existsSync(paths.dockerCompose)) {
@@ -88,12 +91,14 @@ async function startDocker() {
         if (err) error("Docker", lang.docker.error(String(err)), true)
     })
 
-    return await waitUntilDockerConnection()
+    return await waitUntilDockerConnection().catch(() => {
+        error("docker", lang.docker.timeout(), true)
+    })
 }
 
 async function waitUntilDockerConnection() {
     return new Promise((resolve, reject) => {
-        tcpPortUsed.waitUntilUsedOnHost(config.server.port, config.server.host, 1000, 30000)
+        waitUntilUsedOnHost(config.server.port, config.server.host, 1000, 30000)
         .then(() => {
             setTimeout(resolve, 5000)
         })
@@ -157,26 +162,27 @@ function watchGqlSchema() {
     success("Startup", lang.startup.success(protocol, graphqlServerHost))
     info("Startup", lang.startup.livePlug(paths.schema))
     logBreak()
-    cliSingelton.start(paths)
 }
 
 
-async function runDev() {
-    info("Startup", lang.startup.prodPlug())
-    info("Startup", lang.startup.startingGQL(graphqlServerHost, config.server.ssl))
-    info("Startup", lang.startup.info())
+async function runCli() {
+    cliSingelton.start(paths)
+
+    console.log(lang.startup.heading())
+
+    info("Startup", lang.startup.startingGQL(paths.graphql))
 
     info("Docker", lang.docker.start(paths.dockerCompose))
 
-    await startDocker()
-    .catch(() => {
-        error("Docker", lang.docker.timeout(), true)
+    await startDocker().catch((err) => {
+        error("Docker", err, true)
     })
-    .then(() => {
-        success("Docker", lang.docker.success())
-        info("Watch", lang.watch.start())
-        watchGqlSchema()
-    })
+
+    success("Docker", lang.docker.success())
+    info("Watch", lang.watch.start())
+    watchGqlSchema()
+    
+    cliSingelton.resume()
 }
 
 async function runProd(){
@@ -191,8 +197,8 @@ async function runProd(){
 
 insureDockerExists()
 
-if (process.argv[2] == "dev" || !process.argv[2]) {
-    runDev()
-} else if (process.argv[2] == "prod") {
+if (process.argv[2] == "cli" || !process.argv[2]) {
+    runCli()
+} else if (process.argv[2] == "production") {
     runProd()
 }

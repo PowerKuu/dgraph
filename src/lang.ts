@@ -1,25 +1,48 @@
-import * as colors from "colors"
+import colors from "colors"
+import figlet from "figlet"
+
+const version = "3.0.0"
 
 export default {
     startup: {
-        info: () => `Name: dGraph GQL server; Version: 2.0.8; Author: klevn;`,
-        success: (protocol:string, graphqlServer:string) => `Startup completed successfully. Run query on ${protocol}${graphqlServer}/graphql`,
+        heading: () => {
+        const header = figlet.textSync('DgraphCLI', {
+            font: 'Graffiti',
+            horizontalLayout: 'default',
+            verticalLayout: 'default',
+            
+            whitespaceBreak: true
+        })
+
+        const indent = () => {
+            return header.split("\n").map((str) => {
+                return "  " + str
+            }).join("\n")
+        }
+
+        return `  
+${colors.rainbow(indent())}
+        
+  Name: DgraphCLI
+  Version: ${version}
+  Author: https://klevn.com
+`       },
+
+        success: (protocol:string, graphqlServer:string) => `Startup completed successfully. Run query on ${protocol}${graphqlServer}/graphql.`,
 
         prodMode: () => "Starting server in production mode.",
-
-        prodPlug: () => `Run "npx docker-dedicated prod" to run in production.`,
         livePlug: (schemaPath:string) => `Start editing ${schemaPath} to get live updates!`,
         
-        startingGQL: (graphqlServer:string, ssl:boolean) => `Starting GQL dev server host: ${graphqlServer}; ssl: ${ssl};`
+        startingGQL: (graphqlPath:string) => `Starting GQL dev server host: ${graphqlPath}.`
     },
 
     watch: {
         start: () => "Trying to find and watch GQL schema.",
-        success: (schemaPath:string) => "Successfully watching schema: " + schemaPath
+        success: (schemaPath:string) => `Successfully watching schema: ${schemaPath}.`
     },
 
     docker: {
-        error: (err:string) => "Error in docker-compose: " + err,
+        error: (err:string) => `Error in docker-compose: ${err}.`,
         notFound: () => "Docker compose file not found. Copying deafult docker-compose.",
         start: (dockerComposePath:string) => `Starting docker server with ${dockerComposePath}.`,
         timeout: () => "The docker server did not start properly. Max timeout reached.",
@@ -29,9 +52,9 @@ export default {
     
     
     validation: {
-        errorSending: (validatePath:string) => `Error sending validation request to ${validatePath}`,
+        errorSending: (validatePath:string) => `Error sending validation request to ${validatePath}.`,
         errorMessage: (message:string) => `Schema validation: "${message}".`,
-        unknownError: (validate:string) => "Unknown validation error! Data: " + validate,
+        unknownError: (validate:string) => `Unknown validation error! Data: ${validate}.`,
 
         success: () => `Youre GQl schema validated successfully. Write "migrate" to update.`,
     },
@@ -39,18 +62,18 @@ export default {
     
     
     help: () => `
-        List of commands:
-        -   migrate: "Merge schema into the databse."
-        -   drop [data/schema]: "Drop all data/schema and data from the database."
-        -   reload: "Runs "drop schema" and "migrate".
-        -   ratel: "Run the ratel GUI to inspect data."
-        
-        -   stop: "Stop this process."
-        -   help: "This list of commands"
-    `,
+  List of commands:
+  -   migrate: "Merge schema into the databse."
+  -   drop [data/schema]: "Drop all data/schema and data from the database."
+  -   reload: "Runs "drop schema" and "migrate".
+  -   ratel: "Run the ratel GUI to inspect data."
+
+  -   stop: "Stop this process."
+  -   help: "This list of commands."
+  `,
 
     deafult: (command:string) => `No command with name ${command}. Type "help" for all commands.`,
-    question: () => `(CLI) [${colors.cyan("DGRAPH")}]: `,
+    question: () => `  [${colors.cyan(`DGRAPH V${version}`)}] [${new Date().toLocaleDateString("en-US")}]\n  -> `,
  
     ratel: {
         start: () => "Starting ratel server...",
@@ -63,8 +86,8 @@ export default {
     migrating: {
         notValid: () => "Youre schema is not valid! Aborting migration.",
         starting: () => "Starting to migrate schema to database...",
-        success: (status:number) => "Migrated schema to database. Status code: " + status,
-        error: (err:string) => "Unexpected error while migrating: " + err
+        success: (status:number) => `Migrated schema to database. Status code: ${status}.`,
+        error: (err:string) => `Unexpected error while migrating: ${err}.`
     },
 
     drop: {
@@ -72,13 +95,13 @@ export default {
         data: {
             starting: () => "Dropping data from database...",
             success: () => "Dropped all data from database.",
-            error: (err:string) => "Unexpected error while dropping data: " + err
+            error: (err:string) => `Unexpected error while dropping data: ${err}.`
         },
 
         schema: {
             starting: () => "Dropping schema and data from database...",
             success: () => "Dropped all schemas and data from database.",
-            error: (err:string) => "Unexpected error while dropping schemas and data: " + err
+            error: (err:string) => `Unexpected error while dropping schemas and data: ${err}.`
         }
     }
 }

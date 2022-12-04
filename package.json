@@ -1,24 +1,24 @@
 {
   "dependencies": {
     "colors": "^1.4.0",
+    "console-clear": "^1.1.1",
+    "figlet": "^1.5.2",
     "node-fetch": "^2.6.7",
     "open": "^8.4.0",
     "tcp-port-used": "^1.0.2"
   },
-  "name": "dgraph-dedicated",
+  "name": "@klevn/dgraph",
   "version": "3.0.2",
-  "main": "./dist/dgraph-dedicated.js",
-  
+  "main": "./dist/dedicated.js",
   "scripts": {
     "build": "tsc",
-    "postbuild": "copyfiles --error --up 1 src/docker/* dist"
+    "postbuild": "npx copyfiles --error --soft false --up 1 src/docker/** dist"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PowerKuu/dgraph-dedicated.git"
   },
-  "bin": "./dist/dgraph-dedicated.js",
+  "bin": "./dist/dedicated.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -28,6 +28,9 @@
   "homepage": "https://github.com/PowerKuu/dgraph-dedicated#readme",
   "description": "",
   "devDependencies": {
-    "@types/node-fetch": "^2.6.2"
+    "@types/console-clear": "^1.1.0",
+    "@types/figlet": "^1.5.5",
+    "@types/node-fetch": "^2.6.2",
+    "@types/tcp-port-used": "^1.0.1"
   }
 }
