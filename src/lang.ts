@@ -1,3 +1,5 @@
+import * as colors from "colors"
+
 export default {
     startup: {
         info: () => `Name: dGraph GQL server; Version: 2.0.8; Author: klevn;`,
@@ -48,7 +50,8 @@ export default {
     `,
 
     deafult: (command:string) => `No command with name ${command}. Type "help" for all commands.`,
-
+    question: () => `(CLI) [${colors.cyan("DGRAPH")}]: `,
+ 
     ratel: {
         start: () => "Starting ratel server...",
         wait: () => `Wait a few seconds and then access ratel on "http://localhost:8000".`,
@@ -60,7 +63,7 @@ export default {
     migrating: {
         notValid: () => "Youre schema is not valid! Aborting migration.",
         starting: () => "Starting to migrate schema to database...",
-        success: (status:string) => "Migrated schema to database. Status code: " + status,
+        success: (status:number) => "Migrated schema to database. Status code: " + status,
         error: (err:string) => "Unexpected error while migrating: " + err
     },
 

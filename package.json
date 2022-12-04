@@ -7,12 +7,18 @@
   },
   "name": "dgraph-dedicated",
   "version": "3.0.2",
-  "main": "dgraph-dedicated.js",
+  "main": "./dist/dgraph-dedicated.js",
+  
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "copyfiles --error --up 1 src/docker/* dist"
+  },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PowerKuu/dgraph-dedicated.git"
   },
-  "bin": "./dgraph-dedicated.js",
+  "bin": "./dist/dgraph-dedicated.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -20,5 +26,8 @@
     "url": "https://github.com/PowerKuu/dgraph-dedicated/issues"
   },
   "homepage": "https://github.com/PowerKuu/dgraph-dedicated#readme",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.2"
+  }
 }
