@@ -1,19 +1,35 @@
 #!/usr/bin/env node
 
-const fs = require("fs")
-const path = require("path")
-const {exec} = require("child_process")
+import fs from "fs"
+import path from "path"
+import {exec} from "child_process"
 
-const tcpPortUsed = require("tcp-port-used")
-const nodeFetch = require("node-fetch")
+import tcpPortUsed from "tcp-port-used"
+import nodeFetch from "node-fetch"
 
-const {error, info, success} = require("./utils/logger")
-const cli = require("./dgraph-commands")
+import {error, info, success, logBreak} from "./utils/logger"
+import cli from "./dgraph-cli"
+
+import lang from "./lang"
+
+interface Config {
+    server: {
+        host: string,
+        port: number,
+        ssl:  boolean
+    },
+
+    schema: string,
+	docker: {
+		compose: string,
+		name: string,
+	}
+}
 
 const workingDir = process.cwd()
 
 const configPath = path.resolve(workingDir, "./dgraph-dedicated.json")
-var currentConfig
+var currentConfig:Partial<Config>
 
 try {
     currentConfig = require(configPath)
@@ -21,7 +37,7 @@ try {
     currentConfig = {}
 }
 
-const config = {
+const config:Config = {
     "server": {
         "host": "localhost",
         "port": 8080,
@@ -50,8 +66,8 @@ const alterPath = protocol + graphqlServer + "/alter"
 var dockerComposePath = path.resolve(workingDir, config.docker.compose)
 
 if (!fs.existsSync(dockerComposePath)) {
-    info("Docker", "Docker compose file not found. Copying deafult docker-compose.")
-    console.log("")
+    info("Docker", lang.docker.notFound())
+    logBreak()
 
     dockerComposePath = path.resolve(workingDir, "./docker-compose.yml")
     fs.writeFileSync(dockerComposePath, fs.readFileSync(
@@ -80,7 +96,7 @@ async function waitUntilDockerConnection() {
 
 async function startDocker() {
     exec(`docker-compose up`, {cwd: workingDir}, (err) => {
-        if (err) error("Docker", "Error in docker-compose: " + err, true)
+        if (err) error("Docker", lang.docker.error(String(err)), true)
     })
 
     return await waitUntilDockerConnection()
@@ -89,13 +105,15 @@ async function startDocker() {
 function watchGqlSchema() {
     async function updateGqlSchema() {  
         cli.abort()
-        const schema = fs.readFileSync(schemaPath)
+        const schema = fs.readFileSync(schemaPath, {
+            encoding: "utf-8"
+        })
 
         const validateRaw = await nodeFetch(validatePath, {
             method: "POST",
             body: schema
         }).catch((err) => {
-            error("Validation", `Error sending validation request to ${validatePath}`)
+            error("Validation", lang.validation.errorSending(validatePath))
             error("Validation", err)
         })
 
@@ -109,17 +127,17 @@ function watchGqlSchema() {
             firstElement.extensions && 
             firstElement.extensions.code === "success") 
         {
-            success("Validation", `Youre GQl schema validated successfully. Write "migrate" to update.`)
+            success("Validation", lang.validation.success())
             cli.schema = schema
             cli.schemaValid = true
         } else if (firstElement) {
             validate.errors.forEach(element => {
-                error("Validation", `Schema validation: "${element.message}".`)
+                error("Validation", lang.validation.errorMessage(element.message))
             })
 
             cli.schemaValid = false
         } else {    
-            error("Validation", "Unknown validation error! Data: " + validate)
+            error("Validation", lang.validation.unknownError(validate))
 
             cli.schemaValid = false
         }
@@ -131,40 +149,40 @@ function watchGqlSchema() {
         fs.writeFileSync(schemaPath, "")
     }
 
-    fs.watchFile(schemaPath, {interval: 500}, async (curr) => {
-        await updateGqlSchema(curr)
+    fs.watchFile(schemaPath, {interval: 500}, async () => {
+        await updateGqlSchema()
     })
 
-    success("Watch", "Successfully watching schema: " + schemaPath)
-    success("Startup", `Startup completed successfully. Run query on ${protocol}${graphqlServer}/graphql`)
-    info("Startup", `Start editing ${schemaPath} to get live updates!`)
-    console.log("")
+    success("Watch", lang.watch.success(schemaPath))
+    success("Startup", lang.startup.success(protocol, graphqlServer))
+    info("Startup", lang.startup.livePlug(schemaPath))
+    logBreak()
     cli.start(migratePath, alterPath)
 }
 
 async function runDev() {
-    info("Startup", `Run "npx docker-dedicated prod" to run in production.`)
-    info("Startup", `Starting GQL dev server host: ${graphqlServer}; ssl: ${config.server.ssl};`)
-    info("Startup", `Name: dGraph GQL server; Version: 2.0.5; Author: klevn;`)
+    info("Startup", lang.startup.prodPlug())
+    info("Startup", lang.startup.startingGQL(graphqlServer, config.server.ssl))
+    info("Startup", lang.startup.info())
 
-    info("Docker", `Starting docker server with ${dockerComposePath}.`)
+    info("Docker", lang.docker.start(dockerComposePath))
 
     await startDocker()
     .catch(() => {
-        error("Docker", "The docker server did not start properly. Max timeout reached.", true)
+        error("Docker", lang.docker.timeout(), true)
     })
     .then(() => {
-        success("Docker", "Successfully running docker container.")
-        info("Watch", "Trying to find and watch GQL schema.")
+        success("Docker", lang.docker.success())
+        info("Watch", lang.watch.start())
         watchGqlSchema()
     })
 }
 
 async function runProd(){
-    info("Startup", "Starting server in production mode.")
-    info("Docker", `Starting docker server with ${dockerComposePath}.`)
+    info("Startup", lang.startup.prodMode())
+    info("Docker", lang.docker.start(dockerComposePath))
     await startDocker()
-    success("Docker", "Successfully running docker container.")
+    success("Docker", lang.docker.success())
 }
 
 
