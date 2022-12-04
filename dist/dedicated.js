@@ -82,12 +82,16 @@ async function waitUntilDockerConnection() {
     return new Promise((resolve, reject) => {
         (0, tcp_port_used_1.waitUntilUsedOnHost)(config.server.port, config.server.host, 1000, 30000)
             .then(() => {
-            setTimeout(resolve, 5000);
+            setInterval(() => {
+                (0, node_fetch_1.default)(paths.graphql).then(() => {
+                    resolve(true);
+                }).catch(() => { });
+            }, 2000);
         })
             .catch(reject);
     });
 }
-function watchGqlSchema() {
+async function watchGqlSchema() {
     async function updateGqlSchema() {
         cli_1.default.pause();
         const schema = (0, fs_1.readFileSync)(paths.schema, {
@@ -133,6 +137,8 @@ function watchGqlSchema() {
     (0, logger_1.success)("Startup", lang_1.default.startup.success(protocol, graphqlServerHost));
     (0, logger_1.info)("Startup", lang_1.default.startup.livePlug(paths.schema));
     (0, logger_1.logBreak)();
+    await updateGqlSchema();
+    (0, logger_1.logBreak)();
 }
 async function runCli() {
     cli_1.default.start(paths);
@@ -144,7 +150,7 @@ async function runCli() {
     });
     (0, logger_1.success)("Docker", lang_1.default.docker.success());
     (0, logger_1.info)("Watch", lang_1.default.watch.start());
-    watchGqlSchema();
+    await watchGqlSchema();
     cli_1.default.resume();
 }
 async function runProd() {

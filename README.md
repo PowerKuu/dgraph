@@ -1,6 +1,6 @@
 # Dgraph-dedicated
 
-Run: ```npx dgraph-dedicated <cli/production>```
+Run: ```npx @klevn/draph <cli/production>```
 
 Edit shema.graphql to get real time updates.
 Access youre graphql query on http://localhost:8080/graphql.

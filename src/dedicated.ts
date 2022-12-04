@@ -100,14 +100,18 @@ async function waitUntilDockerConnection() {
     return new Promise((resolve, reject) => {
         waitUntilUsedOnHost(config.server.port, config.server.host, 1000, 30000)
         .then(() => {
-            setTimeout(resolve, 5000)
+            setInterval(() => {
+                nodeFetch(paths.graphql).then(() => {
+                    resolve(true)
+                }).catch(() => {})
+            }, 2000)
         })
         .catch(reject)
     })
 }
 
 
-function watchGqlSchema() {
+async function watchGqlSchema() {
     async function updateGqlSchema() {  
         cliSingelton.pause()
         const schema = readFileSync(paths.schema, {
@@ -162,6 +166,8 @@ function watchGqlSchema() {
     success("Startup", lang.startup.success(protocol, graphqlServerHost))
     info("Startup", lang.startup.livePlug(paths.schema))
     logBreak()
+    await updateGqlSchema()
+    logBreak()
 }
 
 
@@ -180,7 +186,7 @@ async function runCli() {
 
     success("Docker", lang.docker.success())
     info("Watch", lang.watch.start())
-    watchGqlSchema()
+    await watchGqlSchema()
     
     cliSingelton.resume()
 }
