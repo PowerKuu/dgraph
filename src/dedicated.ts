@@ -150,8 +150,6 @@ async function watchGqlSchema() {
 
             cliSingelton.schemaValid = false
         }
-
-        cliSingelton.resume()
     }
 
     if (!existsSync(paths.schema)) {

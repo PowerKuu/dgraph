@@ -125,7 +125,6 @@ async function watchGqlSchema() {
             (0, logger_1.error)("Validation", lang_1.default.validation.unknownError(validate));
             cli_1.default.schemaValid = false;
         }
-        cli_1.default.resume();
     }
     if (!(0, fs_1.existsSync)(paths.schema)) {
         (0, fs_1.writeFileSync)(paths.schema, "");
